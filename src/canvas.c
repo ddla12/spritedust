@@ -1,6 +1,6 @@
-#include <canvas.h>
-
-#define CANVAS_SIZE 300
+#include <gtk/gtk.h>
+#include "canvas.h"
+#include "brush.h"
 
 /* Surface to store current scribbles */
 static cairo_surface_t *surface = NULL;
@@ -65,7 +65,9 @@ static void draw_brush (GtkWidget *widget,
   /* Paint to the surface, where we store our state */
   cr = cairo_create (surface);
 
-  cairo_rectangle (cr, x - 3, y - 3, 6, 6);
+  const int SIZE = get_brush_size();
+
+  cairo_rectangle (cr, x - 3, y - 3, SIZE, SIZE);
   cairo_fill (cr);
 
   cairo_destroy (cr);
@@ -120,7 +122,7 @@ static void close_window (void)
     cairo_surface_destroy (surface);
 }
 
-void activate_canvas(GtkWidget *window)
+void activate_canvas(GtkWidget *window) 
 {
   g_signal_connect (window, "destroy", G_CALLBACK (close_window), NULL);
 
@@ -129,8 +131,10 @@ void activate_canvas(GtkWidget *window)
 
   GtkWidget *drawing_area = gtk_drawing_area_new ();
 
+  const int INITIAL_SIZE = 320;
+
   /* set a minimum size */
-  gtk_widget_set_size_request (drawing_area, CANVAS_SIZE, CANVAS_SIZE);
+  gtk_widget_set_size_request (drawing_area, INITIAL_SIZE, INITIAL_SIZE);
 
   gtk_frame_set_child (GTK_FRAME (frame), drawing_area);
 
