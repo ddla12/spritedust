@@ -4,14 +4,13 @@
 #define PLUS_SYMBOL '+'
 
 static int brush_size = 2;
-static GdkRGBA *color = NULL;
 
-static int increment_brush_size()
+static int increment_brush_size(void)
 {
     return brush_size++;
 }
 
-static int decrement_brush_size()
+static int decrement_brush_size(void)
 {
     return brush_size--;
 }
@@ -33,23 +32,27 @@ static gboolean key_pressed (
     return TRUE;
 }
 
-GdkRGBA *get_brush_color()
+GdkRGBA *get_brush_color(void)
 {
-    return color;
+    return NULL;
 }
 
-int get_brush_size()
+int get_brush_size(void)
 {
     return brush_size;
 }
 
-void activate_brush(GtkWidget *window)
+
+void activate_brush(GtkWidget *window, GtkWidget *color)
 {
     GtkEventController *event_controller;
+    GtkColorDialog *dialog = gtk_color_dialog_new();
+    
+    gtk_color_dialog_button_set_dialog(GTK_COLOR_DIALOG_BUTTON (color), dialog);
 
     event_controller = gtk_event_controller_key_new ();
 
     g_signal_connect (event_controller, "key-pressed", G_CALLBACK (key_pressed), NULL);
 
-    gtk_widget_add_controller(GTK_WIDGET(window), event_controller);
+    gtk_widget_add_controller(window, event_controller);
 }

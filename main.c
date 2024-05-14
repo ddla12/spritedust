@@ -1,17 +1,30 @@
 #include <gtk/gtk.h>
-#include <canvas.h>
-#include <brush.h>
+#include "canvas.h"
+#include "brush.h"
 
 static void activate (GtkApplication *app, gpointer user_data) {
-    GtkWidget *window;
+    GtkBuilder *builder = gtk_builder_new();
 
-    window = gtk_application_window_new (app);
-    gtk_window_set_title (GTK_WINDOW (window), "Ziggi sprite");
+    gtk_builder_add_from_file (builder, "ui/window.ui", NULL);
 
-    activate_canvas(window);
-    activate_brush(window);
+    // Window object
+    GObject *window = gtk_builder_get_object (builder, "window");
+
+    gtk_window_set_application(GTK_WINDOW(window), app);
+
+    // Canvas
+    GObject *drawing_area = gtk_builder_get_object(builder, "drawing_area");
+
+    activate_canvas(GTK_WIDGET (window), GTK_WIDGET (drawing_area));
+
+    // Brush
+    GObject *color_button = gtk_builder_get_object(builder, "color_button");
+
+    activate_brush(GTK_WIDGET (window), GTK_WIDGET (color_button));
 
     gtk_window_present (GTK_WINDOW (window));
+
+    g_object_unref (builder);
 }
 
 int main(int argc, char *argv[]) {

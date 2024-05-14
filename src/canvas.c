@@ -122,21 +122,14 @@ static void close_window (void)
     cairo_surface_destroy (surface);
 }
 
-void activate_canvas(GtkWidget *window) 
+void activate_canvas(GtkWidget *window, GtkWidget *drawing_area)
 {
   g_signal_connect (window, "destroy", G_CALLBACK (close_window), NULL);
-
-  GtkWidget *frame = gtk_frame_new (NULL);
-  gtk_window_set_child (GTK_WINDOW (window), frame);
-
-  GtkWidget *drawing_area = gtk_drawing_area_new ();
 
   const int INITIAL_SIZE = 320;
 
   /* set a minimum size */
   gtk_widget_set_size_request (drawing_area, INITIAL_SIZE, INITIAL_SIZE);
-
-  gtk_frame_set_child (GTK_FRAME (frame), drawing_area);
 
   gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (drawing_area), draw_cb, NULL, NULL);
 

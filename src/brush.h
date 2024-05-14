@@ -3,8 +3,8 @@
 #ifndef BRUSH_H
 #define BRUSH_H
 
-GdkRGBA get_brush_color();
-int get_brush_size();
-void activate_brush(GtkWidget *widget);
+GdkRGBA *get_brush_color(void);
+int get_brush_size(void);
+void activate_brush(GtkWidget *widget, GtkWidget *color_button);
 
 #endif /* BRUSH_H */
