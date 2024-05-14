@@ -4,6 +4,7 @@
 #define PLUS_SYMBOL '+'
 
 static int brush_size = 2;
+static GtkWidget *color_picker = NULL;
 
 static int increment_brush_size(void)
 {
@@ -34,7 +35,9 @@ static gboolean key_pressed (
 
 GdkRGBA *get_brush_color(void)
 {
-    return NULL;
+    GdkRGBA *color = gtk_color_dialog_button_get_rgba(GTK_COLOR_DIALOG_BUTTON (color_picker));
+
+    return color;
 }
 
 int get_brush_size(void)
@@ -55,4 +58,6 @@ void activate_brush(GtkWidget *window, GtkWidget *color)
     g_signal_connect (event_controller, "key-pressed", G_CALLBACK (key_pressed), NULL);
 
     gtk_widget_add_controller(window, event_controller);
+
+    color_picker = color;
 }

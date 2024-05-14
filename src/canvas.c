@@ -66,7 +66,9 @@ static void draw_brush (GtkWidget *widget,
   cr = cairo_create (surface);
 
   const int SIZE = get_brush_size();
+  GdkRGBA *color = get_brush_color();
 
+  cairo_set_source_rgb (cr, color->red, color->green, color->blue);
   cairo_rectangle (cr, x - 3, y - 3, SIZE, SIZE);
   cairo_fill (cr);
 
