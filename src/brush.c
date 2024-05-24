@@ -4,7 +4,7 @@
 #define PLUS_SYMBOL '+'
 
 static const int MAX_BRUSH_SIZE = 64;
-static int brush_size = 1;
+static int brush_size = 16;
 static GtkWidget *color_picker = NULL;
 
 static int increment_brush_size(void)

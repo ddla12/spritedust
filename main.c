@@ -18,14 +18,6 @@ static void activate_objects(GtkBuilder *builder, GtkWidget *window) {
     activate_brush(window, GTK_WIDGET (color_button));
 }
 
-static void test(GtkWindow *window, gpointer user_data) {
-    int width, height;
-
-    gtk_window_get_default_size(window, &width, &height);
-
-    g_print("%i - %i\n", width, height);
-}
-
 static void activate (GtkApplication *app, gpointer user_data) {
     GtkBuilder *builder = gtk_builder_new();
 
@@ -33,10 +25,6 @@ static void activate (GtkApplication *app, gpointer user_data) {
 
     // Window object
     GObject *window = gtk_builder_get_object (builder, "window");
-
-    g_object_notify(window, "default-width");
-
-    g_signal_connect(window, "notify", G_CALLBACK (test), NULL);
 
     gtk_window_set_application(GTK_WINDOW(window), app);
 

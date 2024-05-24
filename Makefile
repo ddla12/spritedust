@@ -3,6 +3,6 @@ LDFLAGS=$(shell pkg-config --libs gtk4)
 
 
 app:
-	cc $(CFLAGS) -o app main.c src/*.c  $(LDFLAGS)
+	cc $(CFLAGS) -o app src/* main.c  $(LDFLAGS) -lm
 clean:
 	rm app

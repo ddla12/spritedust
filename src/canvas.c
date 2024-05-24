@@ -1,22 +1,39 @@
 #include <gtk/gtk.h>
 #include "canvas.h"
 #include "brush.h"
+#include <math.h>
 
 /* Surface to store current scribbles */
 static cairo_surface_t *surface = NULL;
 static GtkWidget *canvas = NULL;
-static int canvas_size = 64;
+static int grid_size = 32;
 
 static void clear_surface (void)
 {
+  cairo_surface_t *pattern_surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, grid_size, grid_size);
   cairo_t *cr;
+  cairo_pattern_t *pattern;
+
+  cr = cairo_create(pattern_surface);
+
+  cairo_set_line_width (cr, 0.25);
+  cairo_rectangle (cr, 0, 0, grid_size, grid_size);
+  cairo_stroke (cr);
+  cairo_destroy(cr);
+
+  pattern = cairo_pattern_create_for_surface(pattern_surface);
+  cairo_pattern_set_extend (pattern, CAIRO_EXTEND_REPEAT);
 
   cr = cairo_create (surface);
 
   cairo_set_source_rgb (cr, 1, 1, 1);
   cairo_paint (cr);
+  cairo_set_source(cr, pattern);
+  cairo_paint (cr);
 
   cairo_destroy (cr);
+  cairo_surface_destroy(pattern_surface);
+  cairo_pattern_destroy(pattern);
 }
 
 /* Create a new surface of the appropriate size to store our scribbles */
@@ -71,7 +88,7 @@ static void draw_brush (GtkWidget *widget,
   GdkRGBA *color = get_brush_color();
 
   cairo_set_source_rgb (cr, color->red, color->green, color->blue);
-  cairo_rectangle (cr, x - 3, y - 3, SIZE, SIZE);
+  cairo_rectangle (cr, floor(x / grid_size) * grid_size, floor(y / grid_size) * grid_size, SIZE, SIZE);
   cairo_fill (cr);
 
   cairo_destroy (cr);
@@ -126,19 +143,14 @@ static void close_window (void)
     cairo_surface_destroy (surface);
 }
 
-void set_canvas_size(int size)
-{
-  canvas_size = size;
-
-  gtk_widget_set_size_request (canvas, canvas_size, canvas_size);
-}
-
 void activate_canvas(GtkWidget *window, GtkWidget *drawing_area)
 {
   g_signal_connect (window, "destroy", G_CALLBACK (close_window), NULL);
 
+  const int CANVAS_SIZE = 320;
+
   /* set a minimum size */
-  gtk_widget_set_size_request (drawing_area, canvas_size, canvas_size);
+  gtk_widget_set_size_request (drawing_area, CANVAS_SIZE, CANVAS_SIZE);
 
   gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (drawing_area), draw_cb, NULL, NULL);
 
