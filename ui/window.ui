@@ -5,16 +5,15 @@
         <object class="GtkBox">
             <property name="orientation">vertical</property>
             <child>
-                <object class="GtkFrame">
-                    <child>
-                        <object id="drawing_area" class="GtkDrawingArea" />
-                    </child>
+                <object id="drawing_area" class="GtkDrawingArea">
+                    <property name="vexpand_set">true</property>
+                    <property name="vexpand">true</property>
                 </object>
             </child>
-            <child>        
-                <object class="GtkActionBar">
+            <child>
+                <object id="action_bar" class="GtkActionBar">
                     <child type="start">
-                        <object id="color_button" class="GtkColorDialogButton"/>
+                        <object id="color_button" class="GtkColorDialogButton" />
                     </child>
                 </object>
             </child>

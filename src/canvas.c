@@ -4,6 +4,8 @@
 
 /* Surface to store current scribbles */
 static cairo_surface_t *surface = NULL;
+static GtkWidget *canvas = NULL;
+static int canvas_size = 64;
 
 static void clear_surface (void)
 {
@@ -124,14 +126,19 @@ static void close_window (void)
     cairo_surface_destroy (surface);
 }
 
+void set_canvas_size(int size)
+{
+  canvas_size = size;
+
+  gtk_widget_set_size_request (canvas, canvas_size, canvas_size);
+}
+
 void activate_canvas(GtkWidget *window, GtkWidget *drawing_area)
 {
   g_signal_connect (window, "destroy", G_CALLBACK (close_window), NULL);
 
-  const int INITIAL_SIZE = 320;
-
   /* set a minimum size */
-  gtk_widget_set_size_request (drawing_area, INITIAL_SIZE, INITIAL_SIZE);
+  gtk_widget_set_size_request (drawing_area, canvas_size, canvas_size);
 
   gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (drawing_area), draw_cb, NULL, NULL);
 
@@ -151,4 +158,6 @@ void activate_canvas(GtkWidget *window, GtkWidget *drawing_area)
   gtk_widget_add_controller (drawing_area, GTK_EVENT_CONTROLLER (press));
 
   g_signal_connect (press, "pressed", G_CALLBACK (pressed), drawing_area);
+
+  canvas = drawing_area;
 }
