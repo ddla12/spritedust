@@ -15,6 +15,9 @@
                     <child type="start">
                         <object id="color_button" class="GtkColorDialogButton" />
                     </child>
+                    <child>
+                        <object id="pixel_button" class="GtkButton" />
+                    </child>
                 </object>
             </child>
         </object>

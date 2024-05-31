@@ -1,16 +1,17 @@
 #include <gtk/gtk.h>
 #include "canvas.h"
 #include "brush.h"
+#include "action.h"
+#include "src/types.h"
 
-static void activate_objects(GtkBuilder *builder, GtkWidget *window) {
-    GObject *action_bar = gtk_builder_get_object(builder, "action_bar");
-
-    gtk_widget_set_size_request (GTK_WIDGET (action_bar), 16, 16);
-
+static void activate_objects(GtkBuilder *builder, GtkWidget *window, gpointer user_data) {
+    // Action
+    activate_action(builder, window, user_data);
+    
     // Canvas
     GObject *drawing_area = gtk_builder_get_object(builder, "drawing_area");
 
-    activate_canvas(window, GTK_WIDGET (drawing_area));
+    activate_canvas(window, GTK_WIDGET (drawing_area), user_data);
 
     // Brush
     GObject *color_button = gtk_builder_get_object(builder, "color_button");
@@ -29,7 +30,7 @@ static void activate (GtkApplication *app, gpointer user_data) {
     gtk_window_set_application(GTK_WINDOW(window), app);
 
     // Other objects
-    activate_objects(builder, GTK_WIDGET (window));
+    activate_objects(builder, GTK_WIDGET (window), user_data);
 
     gtk_window_present (GTK_WINDOW (window));
 
@@ -38,11 +39,14 @@ static void activate (GtkApplication *app, gpointer user_data) {
 
 int main(int argc, char *argv[]) {
     GtkApplication *app;
+    app_data data;
     int status;
     
     app = gtk_application_new ("org.gtk.example", G_APPLICATION_DEFAULT_FLAGS);
 
-    g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
+    data.pixel_size = DEFAULT_PIXEL_SIZE;
+
+    g_signal_connect (app, "activate", G_CALLBACK (activate), &data);
     status = g_application_run (G_APPLICATION (app), argc, argv);
     g_object_unref (app);
 

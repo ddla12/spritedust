@@ -1,12 +1,15 @@
+#include <math.h>
 #include <gtk/gtk.h>
 #include "canvas.h"
 #include "brush.h"
-#include <math.h>
+#include "types.h"
+
+#define NEAREST_INTEGER(x, y) floor(x / y) * y
 
 /* Surface to store current scribbles */
 static cairo_surface_t *surface = NULL;
 static GtkWidget *canvas = NULL;
-static int grid_size = 32;
+static int grid_size;
 
 static void clear_surface (void)
 {
@@ -84,11 +87,10 @@ static void draw_brush (GtkWidget *widget,
   /* Paint to the surface, where we store our state */
   cr = cairo_create (surface);
 
-  const int SIZE = get_brush_size();
   GdkRGBA *color = get_brush_color();
 
   cairo_set_source_rgb (cr, color->red, color->green, color->blue);
-  cairo_rectangle (cr, floor(x / grid_size) * grid_size, floor(y / grid_size) * grid_size, SIZE, SIZE);
+  cairo_rectangle (cr, NEAREST_INTEGER (x, grid_size), NEAREST_INTEGER(y, grid_size), grid_size, grid_size);
   cairo_fill (cr);
 
   cairo_destroy (cr);
@@ -143,11 +145,13 @@ static void close_window (void)
     cairo_surface_destroy (surface);
 }
 
-void activate_canvas(GtkWidget *window, GtkWidget *drawing_area)
+void activate_canvas(GtkWidget *window, GtkWidget *drawing_area, gpointer user_data)
 {
   g_signal_connect (window, "destroy", G_CALLBACK (close_window), NULL);
 
-  const int CANVAS_SIZE = 320;
+  grid_size = (APP_DATA (user_data))->pixel_size;
+
+  const int CANVAS_SIZE = grid_size * 10;
 
   /* set a minimum size */
   gtk_widget_set_size_request (drawing_area, CANVAS_SIZE, CANVAS_SIZE);
