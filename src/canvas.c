@@ -43,8 +43,12 @@ static void clear_surface (void)
 static void resize_cb (GtkWidget *widget,
            int        width,
            int        height,
-           gpointer   data)
+           gpointer   user_data)
 {
+  app_data *data = APP_DATA (user_data);
+
+  grid_size = data->pixel_size;
+
   if (surface)
     {
       cairo_surface_destroy (surface);
@@ -149,16 +153,14 @@ void activate_canvas(GtkWidget *window, GtkWidget *drawing_area, gpointer user_d
 {
   g_signal_connect (window, "destroy", G_CALLBACK (close_window), NULL);
 
-  grid_size = (APP_DATA (user_data))->pixel_size;
-
-  const int CANVAS_SIZE = grid_size * 10;
+  const int CANVAS_SIZE = (APP_DATA (user_data))->pixel_size * 10;
 
   /* set a minimum size */
   gtk_widget_set_size_request (drawing_area, CANVAS_SIZE, CANVAS_SIZE);
 
   gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (drawing_area), draw_cb, NULL, NULL);
 
-  g_signal_connect_after (drawing_area, "resize", G_CALLBACK (resize_cb), NULL);
+  g_signal_connect_after (drawing_area, "resize", G_CALLBACK (resize_cb), user_data);
 
   GtkGesture *drag = gtk_gesture_drag_new ();
 

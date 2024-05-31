@@ -3,6 +3,6 @@
 #ifndef ACTION_H
 #define ACTION_H
 
-void activate_action(GtkBuilder *builder, GtkWidget *window, gpointer user_data);
+void activate_action(GtkBuilder *builder, GtkWidget *window, gpointer user_data, GtkWidget *drawing_area);
 
 #endif

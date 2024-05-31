@@ -5,13 +5,13 @@
 #include "src/types.h"
 
 static void activate_objects(GtkBuilder *builder, GtkWidget *window, gpointer user_data) {
-    // Action
-    activate_action(builder, window, user_data);
-    
     // Canvas
     GObject *drawing_area = gtk_builder_get_object(builder, "drawing_area");
 
     activate_canvas(window, GTK_WIDGET (drawing_area), user_data);
+
+    // Action
+    activate_action(builder, window, user_data, GTK_WIDGET (drawing_area));
 
     // Brush
     GObject *color_button = gtk_builder_get_object(builder, "color_button");
@@ -27,7 +27,7 @@ static void activate (GtkApplication *app, gpointer user_data) {
     // Window object
     GObject *window = gtk_builder_get_object (builder, "window");
 
-    gtk_window_set_application(GTK_WINDOW(window), app);
+    gtk_window_set_application(GTK_WINDOW (window), app);
 
     // Other objects
     activate_objects(builder, GTK_WIDGET (window), user_data);
