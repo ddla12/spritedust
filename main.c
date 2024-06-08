@@ -22,7 +22,7 @@ static void activate_objects(GtkBuilder *builder, GtkWidget *window, gpointer us
 static void activate (GtkApplication *app, gpointer user_data) {
     GtkBuilder *builder = gtk_builder_new();
 
-    gtk_builder_add_from_file (builder, "ui/window.ui", NULL);
+    gtk_builder_add_from_file (builder, "./ui/window.ui", NULL);
 
     // Window object
     GObject *window = gtk_builder_get_object (builder, "window");

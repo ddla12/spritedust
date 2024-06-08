@@ -18,6 +18,9 @@
                     <child>
                         <object id="pixel_button" class="GtkButton" />
                     </child>
+                    <child>
+                        <object id="save_button" class="GtkButton" />
+                    </child>
                 </object>
             </child>
         </object>
