@@ -1,5 +1,6 @@
 #include <math.h>
 #include <gtk/gtk.h>
+#include <cairo/cairo.h>
 #include "canvas.h"
 #include "brush.h"
 #include "types.h"
@@ -97,6 +98,7 @@ static PointList *bresenham_algorithm(Point *a, Point *b)
 /* Surface to store current scribbles */
 static Point *start = NULL;
 static cairo_surface_t *surface = NULL;
+static cairo_surface_t *line_surface = NULL;
 static GtkWidget *canvas = NULL;
 static gboolean straigt_lines = FALSE;
 
@@ -200,17 +202,36 @@ static void draw_straight_line(GtkWidget *widget, Point *point)
 
   PointList *current = bresenham_algorithm(a, b);
 
+  cairo_t *cr;
+
+  cr = cairo_create (line_surface);
+  
+  GdkRGBA *color = get_brush_color();
+
+  cairo_set_source_rgba (cr, 0, 0, 0, 1);
+  cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
+  cairo_paint(cr);
+
+  cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+  cairo_set_source_rgb (cr, color->red, color->green, color->blue);
+  
   while(current != NULL) {
-    draw_brush(widget, point_to_pixels_in_place(current->value));
+    Point *p = current->value;
+
+    point_to_pixels_in_place(p);
+
+    cairo_rectangle (cr, NEAREST_INTEGER (p->x, grid_size), NEAREST_INTEGER(p->y, grid_size), grid_size, grid_size);
+    cairo_fill (cr);
 
     PointList* tmp = current->next;
 
-    free(current->value);
+    free(p);
     free(current);
 
     current = tmp;
   }
 
+  cairo_destroy(cr);
   free(a);
   free(b);
 }
@@ -250,7 +271,17 @@ static void drag_end (GtkGestureDrag *gesture,
 {
   Point *p = add_point(start, x, y);
 
+  if(straigt_lines) 
+  {
+    cairo_t *cr = cairo_create (surface);
+    cairo_set_source_surface (cr, line_surface, 0, 0);
+    cairo_paint (cr);
+    cairo_destroy(cr);
+    gtk_widget_queue_draw (area);
+  }
+
   draw_brush (area, p);
+
 
   free(p);
 }
@@ -278,6 +309,13 @@ static gboolean key_pressed (
   GdkModifierType state,
   gpointer user_data
 ) {
+  if(line_surface != NULL) {
+    cairo_surface_destroy(line_surface);
+    line_surface = NULL;  
+  }
+
+  line_surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, canvas_width, canvas_height);
+
   straigt_lines = keyval == GDK_KEY_Shift_L;
 
   return TRUE;
@@ -290,6 +328,11 @@ static void key_released (
   GdkModifierType state,
   gpointer user_data
 ) {
+  if(line_surface != NULL) {
+    cairo_surface_destroy(line_surface);
+    line_surface = NULL;  
+  }
+
   straigt_lines = FALSE;
 }
 
