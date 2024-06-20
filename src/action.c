@@ -9,7 +9,7 @@ static void destroy (GtkWidget* self, gpointer user_data) {
 
   data->pixel_size = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (self));
 
-  g_signal_emit_by_name(canvas, "resize", 0, 0, user_data);
+  g_signal_emit_by_name(canvas, "resize", gtk_widget_get_width(GTK_WIDGET (parent)), gtk_widget_get_height(GTK_WIDGET (parent)), user_data);
 }
 
 static GtkWindow *create_modal_dialog(gpointer user_data) {

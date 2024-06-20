@@ -7,6 +7,7 @@
 
 #define NEAREST_INTEGER(x, y) floor(x / y) * y
 #define SQUARE(x) pow(x, 2)
+#define GRID_COLOR 0.85
 
 static int canvas_width;
 static int canvas_height;
@@ -96,7 +97,8 @@ static PointList *bresenham_algorithm(Point *a, Point *b)
 }
 
 /* Surface to store current scribbles */
-static Point *start = NULL;
+static Point *brush_p = NULL;
+static Point *eraser_p = NULL;
 static cairo_surface_t *surface = NULL;
 static cairo_surface_t *line_surface = NULL;
 static GtkWidget *canvas = NULL;
@@ -110,7 +112,7 @@ static void clear_surface (void)
 
   cr = cairo_create(pattern_surface);
 
-  cairo_set_line_width (cr, 0.25);
+  cairo_set_source_rgb(cr, GRID_COLOR, GRID_COLOR, GRID_COLOR);
   cairo_rectangle (cr, 0, 0, grid_size, grid_size);
   cairo_stroke (cr);
   cairo_destroy(cr);
@@ -195,9 +197,29 @@ static void draw_brush (GtkWidget *widget, Point *point)
   gtk_widget_queue_draw (widget);
 }
 
+static void erase_pixel(GtkWidget *widget, Point *point)
+{
+  cairo_t *cr;
+
+  /* Paint to the surface, where we store our state */
+  cr = cairo_create (surface);
+
+  cairo_set_source_rgb (cr, 1, 1, 1);
+  cairo_rectangle (cr, NEAREST_INTEGER (point->x, grid_size), NEAREST_INTEGER(point->y, grid_size), grid_size, grid_size);
+  cairo_fill(cr);
+
+  cairo_set_source_rgb(cr, GRID_COLOR, GRID_COLOR, GRID_COLOR);
+  cairo_rectangle (cr, NEAREST_INTEGER (point->x, grid_size), NEAREST_INTEGER(point->y, grid_size), grid_size, grid_size);
+  cairo_stroke (cr);
+
+  cairo_destroy (cr);
+
+  gtk_widget_queue_draw (widget);
+}
+
 static void draw_straight_line(GtkWidget *widget, Point *point)
 {
-  Point *a = point_to_unit(start);
+  Point *a = point_to_unit(brush_p);
   Point *b = point_to_unit(point);
 
   PointList *current = bresenham_algorithm(a, b);
@@ -241,12 +263,12 @@ static void drag_begin (GtkGestureDrag *gesture,
             double          y,
             GtkWidget      *area)
 {
-  if(start != NULL)
-    free(start);
+  if(brush_p != NULL)
+    free(brush_p);
 
-  start = create_point(x, y);
+  brush_p = create_point(x, y);
 
-  draw_brush (area, start);
+  draw_brush (area, brush_p);
 }
 
 static void drag_update (GtkGestureDrag *gesture,
@@ -254,7 +276,7 @@ static void drag_update (GtkGestureDrag *gesture,
              double          y,
              GtkWidget      *area)
 {
-  Point *p = add_point(start, x, y);
+  Point *p = add_point(brush_p, x, y);
 
   if (!straigt_lines)
     draw_brush (area, p);
@@ -269,7 +291,7 @@ static void drag_end (GtkGestureDrag *gesture,
           double          y,
           GtkWidget      *area)
 {
-  Point *p = add_point(start, x, y);
+  Point *p = add_point(brush_p, x, y);
 
   if(straigt_lines) 
   {
@@ -282,18 +304,45 @@ static void drag_end (GtkGestureDrag *gesture,
 
   draw_brush (area, p);
 
+  free(p);
+}
+
+static void erase_begin (GtkGestureDrag *gesture,
+            double          x,
+            double          y,
+            GtkWidget      *area)
+{
+  if(eraser_p != NULL) {
+    free(eraser_p);
+  }
+
+  eraser_p = create_point(x, y);
+
+  erase_pixel (area, eraser_p);
+}
+
+static void erase_update (GtkGestureDrag *gesture,
+             double          x,
+             double          y,
+             GtkWidget      *area)
+{
+  Point *p = add_point(eraser_p, x, y);
+
+  erase_pixel (area, p);
 
   free(p);
 }
 
-static void pressed (GtkGestureClick *gesture,
-         int              n_press,
-         double           x,
-         double           y,
-         GtkWidget       *area)
+static void erase_end (GtkGestureDrag *gesture,
+          double          x,
+          double          y,
+          GtkWidget      *area)
 {
-  clear_surface ();
-  gtk_widget_queue_draw (area);
+  Point *p = add_point(eraser_p, x, y);
+
+  erase_pixel (area, p);
+
+  free(p);
 }
 
 static void close_window (void)
@@ -336,6 +385,26 @@ static void key_released (
   straigt_lines = FALSE;
 }
 
+static void set_brush(GtkWidget *drawing_area) {
+  GtkGesture *drag = gtk_gesture_drag_new ();
+
+  gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (drag), GDK_BUTTON_PRIMARY);
+  gtk_widget_add_controller (drawing_area, GTK_EVENT_CONTROLLER (drag));
+  g_signal_connect (drag, "drag-begin", G_CALLBACK (drag_begin), drawing_area);
+  g_signal_connect (drag, "drag-update", G_CALLBACK (drag_update), drawing_area);
+  g_signal_connect (drag, "drag-end", G_CALLBACK (drag_end), drawing_area);
+}
+
+static void set_eraser(GtkWidget *drawing_area) {
+  GtkGesture *drag = gtk_gesture_drag_new ();
+
+  gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (drag), GDK_BUTTON_SECONDARY);
+  gtk_widget_add_controller (drawing_area, GTK_EVENT_CONTROLLER (drag));
+  g_signal_connect (drag, "drag-begin", G_CALLBACK (erase_begin), drawing_area);
+  g_signal_connect (drag, "drag-update", G_CALLBACK (erase_update), drawing_area);
+  g_signal_connect (drag, "drag-end", G_CALLBACK (erase_end), drawing_area);
+}
+
 void activate_canvas(GtkWidget *window, GtkWidget *drawing_area, gpointer user_data)
 {
   g_signal_connect (window, "destroy", G_CALLBACK (close_window), NULL);
@@ -349,20 +418,8 @@ void activate_canvas(GtkWidget *window, GtkWidget *drawing_area, gpointer user_d
 
   g_signal_connect_after (drawing_area, "resize", G_CALLBACK (resize_cb), user_data);
 
-  GtkGesture *drag = gtk_gesture_drag_new ();
-
-  gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (drag), GDK_BUTTON_PRIMARY);
-  gtk_widget_add_controller (drawing_area, GTK_EVENT_CONTROLLER (drag));
-  g_signal_connect (drag, "drag-begin", G_CALLBACK (drag_begin), drawing_area);
-  g_signal_connect (drag, "drag-update", G_CALLBACK (drag_update), drawing_area);
-  g_signal_connect (drag, "drag-end", G_CALLBACK (drag_end), drawing_area);
-
-  GtkGesture *press = gtk_gesture_click_new ();
-
-  gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (press), GDK_BUTTON_SECONDARY);
-  gtk_widget_add_controller (drawing_area, GTK_EVENT_CONTROLLER (press));
-
-  g_signal_connect (press, "pressed", G_CALLBACK (pressed), drawing_area);
+  set_brush(drawing_area);
+  set_eraser(drawing_area);
 
   GtkEventController *key = gtk_event_controller_key_new();
 
