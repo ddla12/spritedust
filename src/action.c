@@ -1,15 +1,12 @@
 #include <gtk/gtk.h>
 #include "types.h"
+#include "brush.h"
 
 static GtkWindow *parent = NULL;
 static GtkWidget *canvas = NULL;
 
 static void destroy (GtkWidget* self, gpointer user_data) {
-  app_data *data = APP_DATA (user_data);
-
-  data->pixel_size = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (self));
-
-  g_signal_emit_by_name(canvas, "resize", gtk_widget_get_width(GTK_WIDGET (parent)), gtk_widget_get_height(GTK_WIDGET (parent)), user_data);
+  set_brush_size (gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (self)));
 }
 
 static GtkWindow *create_modal_dialog(gpointer user_data) {
@@ -35,15 +32,39 @@ static void clicked_callback (GtkButton* self, gpointer user_data) {
   gtk_window_present(window);
 }
 
-void activate_action(GtkBuilder *builder, GtkWidget *window, gpointer user_data, GtkWidget *drawing_area) {
+static void on_save_response (GObject *source, GAsyncResult *result, gpointer user_data)
+{
+  GtkFileDialog *dialog = GTK_FILE_DIALOG (source);
+
+  g_autoptr (GFile) file = gtk_file_dialog_save_finish (dialog, result, NULL);
+
+  if (file != NULL)
+    save_canvas (file);
+}
+
+static void save_callback (GtkButton* self, gpointer user_data) {
+  GtkFileDialog *file_dialog = gtk_file_dialog_new ();
+
+  gtk_window_set_modal(GTK_WINDOW (file_dialog), TRUE);
+  gtk_window_set_transient_for(GTK_WINDOW (file_dialog), parent);
+
+  gtk_file_dialog_save (file_dialog, parent, NULL, on_save_response, user_data);
+}
+
+void activate_action(GtkBuilder *builder, GtkWidget *window, gpointer user_data) {
     GObject *action_bar = gtk_builder_get_object(builder, "action_bar");
 
     gtk_widget_set_size_request (GTK_WIDGET (action_bar), DEFAULT_PIXEL_SIZE, DEFAULT_PIXEL_SIZE);
 
+    // Size
     GObject *size_button = gtk_builder_get_object(builder, "pixel_button");
 
     g_signal_connect(GTK_BUTTON (size_button), "clicked", G_CALLBACK (clicked_callback), user_data);
 
+    // Save
+    GObject *save_button = gtk_builder_get_object(builder, "save_button");
+
+    g_signal_connect(GTK_BUTTON (save_button), "clicked", G_CALLBACK (save_callback), user_data);
+
     parent = GTK_WINDOW (window);
-    canvas = drawing_area;
 }

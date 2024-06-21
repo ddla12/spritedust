@@ -11,7 +11,7 @@ static void activate_objects(GtkBuilder *builder, GtkWidget *window, gpointer us
     activate_canvas(window, GTK_WIDGET (drawing_area), user_data);
 
     // Action
-    activate_action(builder, window, user_data, GTK_WIDGET (drawing_area));
+    activate_action(builder, window, user_data);
 
     // Brush
     GObject *color_button = gtk_builder_get_object(builder, "color_button");
@@ -39,14 +39,11 @@ static void activate (GtkApplication *app, gpointer user_data) {
 
 int main(int argc, char *argv[]) {
     GtkApplication *app;
-    app_data data;
     int status;
     
     app = gtk_application_new ("org.gtk.example", G_APPLICATION_DEFAULT_FLAGS);
 
-    data.pixel_size = DEFAULT_PIXEL_SIZE;
-
-    g_signal_connect (app, "activate", G_CALLBACK (activate), &data);
+    g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
     status = g_application_run (G_APPLICATION (app), argc, argv);
     g_object_unref (app);
 

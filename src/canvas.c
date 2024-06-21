@@ -7,7 +7,6 @@
 
 #define NEAREST_INTEGER(x, y) floor(x / y) * y
 #define SQUARE(x) pow(x, 2)
-#define GRID_COLOR 0.85
 
 static int canvas_width;
 static int canvas_height;
@@ -106,30 +105,14 @@ static gboolean straigt_lines = FALSE;
 
 static void clear_surface (void)
 {
-  cairo_surface_t *pattern_surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, grid_size, grid_size);
   cairo_t *cr;
-  cairo_pattern_t *pattern;
-
-  cr = cairo_create(pattern_surface);
-
-  cairo_set_source_rgb(cr, GRID_COLOR, GRID_COLOR, GRID_COLOR);
-  cairo_rectangle (cr, 0, 0, grid_size, grid_size);
-  cairo_stroke (cr);
-  cairo_destroy(cr);
-
-  pattern = cairo_pattern_create_for_surface(pattern_surface);
-  cairo_pattern_set_extend (pattern, CAIRO_EXTEND_REPEAT);
 
   cr = cairo_create (surface);
 
   cairo_set_source_rgb (cr, 1, 1, 1);
   cairo_paint (cr);
-  cairo_set_source(cr, pattern);
-  cairo_paint (cr);
 
   cairo_destroy (cr);
-  cairo_surface_destroy(pattern_surface);
-  cairo_pattern_destroy(pattern);
 }
 
 /* Create a new surface of the appropriate size to store our scribbles */
@@ -138,9 +121,7 @@ static void resize_cb (GtkWidget *widget,
            int        height,
            gpointer   user_data)
 {
-  app_data *data = APP_DATA (user_data);
-
-  grid_size = data->pixel_size;
+  grid_size = get_brush_size();
   canvas_width = width;
   canvas_height = height;
 
@@ -188,7 +169,10 @@ static void draw_brush (GtkWidget *widget, Point *point)
   GdkRGBA *color = get_brush_color();
 
   cairo_set_source_rgb (cr, color->red, color->green, color->blue);
-  cairo_rectangle (cr, NEAREST_INTEGER (point->x, grid_size), NEAREST_INTEGER(point->y, grid_size), grid_size, grid_size);
+
+  int size = get_brush_size ();
+
+  cairo_rectangle (cr, NEAREST_INTEGER (point->x, size), NEAREST_INTEGER(point->y, size), size, size);
   cairo_fill (cr);
 
   cairo_destroy (cr);
@@ -204,13 +188,11 @@ static void erase_pixel(GtkWidget *widget, Point *point)
   /* Paint to the surface, where we store our state */
   cr = cairo_create (surface);
 
-  cairo_set_source_rgb (cr, 1, 1, 1);
-  cairo_rectangle (cr, NEAREST_INTEGER (point->x, grid_size), NEAREST_INTEGER(point->y, grid_size), grid_size, grid_size);
-  cairo_fill(cr);
+  int size = get_brush_size ();
 
-  cairo_set_source_rgb(cr, GRID_COLOR, GRID_COLOR, GRID_COLOR);
-  cairo_rectangle (cr, NEAREST_INTEGER (point->x, grid_size), NEAREST_INTEGER(point->y, grid_size), grid_size, grid_size);
-  cairo_stroke (cr);
+  cairo_set_source_rgb (cr, 1, 1, 1);
+  cairo_rectangle (cr, NEAREST_INTEGER (point->x, size), NEAREST_INTEGER(point->y, size), size, size);
+  cairo_fill(cr);
 
   cairo_destroy (cr);
 
@@ -237,12 +219,14 @@ static void draw_straight_line(GtkWidget *widget, Point *point)
   cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
   cairo_set_source_rgb (cr, color->red, color->green, color->blue);
   
+  int size = get_brush_size();
+
   while(current != NULL) {
     Point *p = current->value;
 
     point_to_pixels_in_place(p);
 
-    cairo_rectangle (cr, NEAREST_INTEGER (p->x, grid_size), NEAREST_INTEGER(p->y, grid_size), grid_size, grid_size);
+    cairo_rectangle (cr, NEAREST_INTEGER (p->x, size), NEAREST_INTEGER(p->y, size), size, size);
     cairo_fill (cr);
 
     PointList* tmp = current->next;
@@ -405,11 +389,15 @@ static void set_eraser(GtkWidget *drawing_area) {
   g_signal_connect (drag, "drag-end", G_CALLBACK (erase_end), drawing_area);
 }
 
+void save_canvas (GFile *file) {
+  
+}
+
 void activate_canvas(GtkWidget *window, GtkWidget *drawing_area, gpointer user_data)
 {
   g_signal_connect (window, "destroy", G_CALLBACK (close_window), NULL);
 
-  const int CANVAS_SIZE = (APP_DATA (user_data))->pixel_size * 10;
+  const int CANVAS_SIZE = get_brush_size() * 10;
 
   /* set a minimum size */
   gtk_widget_set_size_request (drawing_area, CANVAS_SIZE, CANVAS_SIZE);
