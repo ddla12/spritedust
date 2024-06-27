@@ -39,14 +39,11 @@ static void on_save_response (GObject *source, GAsyncResult *result, gpointer us
   g_autoptr (GFile) file = gtk_file_dialog_save_finish (dialog, result, NULL);
 
   if (file != NULL)
-    save_canvas (file);
+    save_canvas (file, user_data);
 }
 
 static void save_callback (GtkButton* self, gpointer user_data) {
   GtkFileDialog *file_dialog = gtk_file_dialog_new ();
-
-  gtk_window_set_modal(GTK_WINDOW (file_dialog), TRUE);
-  gtk_window_set_transient_for(GTK_WINDOW (file_dialog), parent);
 
   gtk_file_dialog_save (file_dialog, parent, NULL, on_save_response, user_data);
 }
