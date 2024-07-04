@@ -5,10 +5,12 @@
 
 static GtkWindow *parent = NULL;
 
+// Save new pixel value
 static void destroy (GtkWidget* self, gpointer user_data) {
   set_brush_size (gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (self)));
 }
 
+// Create a modal for pixel size
 static GtkWindow *create_modal_dialog(gpointer user_data) {
   GtkWindow *window = GTK_WINDOW (gtk_window_new());
 
@@ -32,6 +34,7 @@ static void clicked_callback (GtkButton* self, gpointer user_data) {
   gtk_window_present(window);
 }
 
+// Init save process
 static void on_save_response (GObject *source, GAsyncResult *result, gpointer user_data)
 {
   GtkFileDialog *dialog = GTK_FILE_DIALOG (source);

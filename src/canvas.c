@@ -85,7 +85,6 @@ static PointList *bresenham_algorithm(Point *a, Point *b)
   return head;
 }
 
-/* Surface to store current scribbles */
 static Point *brush_p = NULL;
 static Point *eraser_p = NULL;
 static cairo_surface_t *surface = NULL;
@@ -99,6 +98,7 @@ typedef struct
     unsigned char *end;
 } closure_t;
 
+// Set surface to white
 static void clear_surface (void)
 {
   cairo_t *cr;
@@ -111,7 +111,6 @@ static void clear_surface (void)
   cairo_destroy (cr);
 }
 
-/* Create a new surface of the appropriate size to store our scribbles */
 static void resize_cb (GtkWidget *widget,
            int        width,
            int        height,
@@ -127,14 +126,11 @@ static void resize_cb (GtkWidget *widget,
 	    surface = NULL;
 	}
 	
+	// Create surface when resize
 	surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, canvas_width, canvas_height);
 	clear_surface ();
 }
 
-/* Redraw the screen from the surface. Note that the draw
- * callback receives a ready-to-be-used cairo_t that is already
- * clipped to only draw the exposed areas of the widget
- */
 static void draw_cb (GtkDrawingArea *drawing_area,
          cairo_t        *cr,
          int             width,
@@ -145,12 +141,10 @@ static void draw_cb (GtkDrawingArea *drawing_area,
   cairo_paint (cr);
 }
 
-/* Draw a rectangle on the surface at the given position */
 static void draw_brush (GtkWidget *widget, Point *point)
 {
   cairo_t *cr;
 
-  /* Paint to the surface, where we store our state */
   cr = cairo_create (surface);
 
   GdkRGBA *color = get_brush_color();
@@ -164,7 +158,6 @@ static void draw_brush (GtkWidget *widget, Point *point)
 
   cairo_destroy (cr);
 
-  /* Now invalidate the drawing area. */
   gtk_widget_queue_draw (widget);
 }
 
@@ -172,11 +165,11 @@ static void erase_pixel(GtkWidget *widget, Point *point)
 {
   cairo_t *cr;
 
-  /* Paint to the surface, where we store our state */
   cr = cairo_create (surface);
 
   int size = get_brush_size ();
 
+  // Just set pipxel to white
   cairo_set_source_rgb (cr, 1, 1, 1);
   cairo_rectangle (cr, NEAREST_INTEGER (point->x, size), NEAREST_INTEGER(point->y, size), size, size);
   cairo_fill(cr);
@@ -186,6 +179,7 @@ static void erase_pixel(GtkWidget *widget, Point *point)
   gtk_widget_queue_draw (widget);
 }
 
+// Temp surface for draw straight line onto the main surface
 static void create_temp_surface (void) {
 	temp = cairo_surface_create_similar_image (surface, CAIRO_FORMAT_ARGB32, canvas_width, canvas_height);
 
@@ -212,6 +206,7 @@ static void draw_straight_line(GtkWidget *widget, Point *point)
 
   cr = cairo_create (surface);
   
+  // We draw onto temp so we keep the original picture
   cairo_set_source_surface (cr, temp, 0, 0);
   cairo_paint (cr);
 
@@ -342,6 +337,7 @@ static gboolean key_pressed (
   GdkModifierType state,
   gpointer user_data
 ) {
+	// If key is left shift
 	straigt_lines = keyval == GDK_KEY_Shift_L;
 
 	return TRUE;
@@ -379,6 +375,7 @@ static void set_eraser(GtkWidget *drawing_area) {
 
 static unsigned int total_length = 0;
 
+// Custom writer
 static cairo_status_t write_callback (
 		void *closure,
 		const unsigned char *data,
@@ -458,9 +455,11 @@ void activate_canvas(GtkWidget *window, GtkWidget *drawing_area, gpointer user_d
 
   g_signal_connect_after (drawing_area, "resize", G_CALLBACK (resize_cb), user_data);
 
+  //  Connect tools
   set_brush(drawing_area);
   set_eraser(drawing_area);
 
+  // Straight line controller
   GtkEventController *key = gtk_event_controller_key_new();
 
   gtk_widget_add_controller(window, key);
