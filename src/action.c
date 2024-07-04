@@ -1,24 +1,24 @@
 #include <gtk/gtk.h>
 #include "types.h"
 #include "brush.h"
+#include "canvas.h"
 
 static GtkWindow *parent = NULL;
-static GtkWidget *canvas = NULL;
 
 static void destroy (GtkWidget* self, gpointer user_data) {
   set_brush_size (gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (self)));
 }
 
 static GtkWindow *create_modal_dialog(gpointer user_data) {
-  GtkWidget *window = GTK_WINDOW (gtk_window_new());
+  GtkWindow *window = GTK_WINDOW (gtk_window_new());
 
   gtk_window_set_modal(window, TRUE);
   gtk_window_set_transient_for(window, parent);
 
-  GtkFrame *frame = gtk_frame_new("New pixel size");
+  GtkWidget *frame = gtk_frame_new("New pixel size");
   GtkWidget *spin = gtk_spin_button_new_with_range(LOWEST_PIXEL_SIZE, HIGHEST_PIXEL_SIZE, 1);
 
-  gtk_frame_set_child(frame, spin);
+  gtk_frame_set_child(GTK_FRAME (frame), spin);
   gtk_window_set_child(window, GTK_WIDGET (frame));
 
   g_signal_connect_after(spin, "destroy", G_CALLBACK (destroy), user_data);

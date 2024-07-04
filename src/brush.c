@@ -6,7 +6,9 @@ static int brush_size = DEFAULT_PIXEL_SIZE;
 
 GdkRGBA *get_brush_color(void)
 {
-    GdkRGBA *color = gtk_color_dialog_button_get_rgba(GTK_COLOR_DIALOG_BUTTON (color_picker));
+    GdkRGBA *color;
+    
+    color = gtk_color_dialog_button_get_rgba(GTK_COLOR_DIALOG_BUTTON (color_picker));
 
     return color;
 }

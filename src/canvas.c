@@ -37,16 +37,6 @@ static Point *add_point(Point *a, double x, double y)
   return create_point(a->x + x, a->y + y);
 }
 
-static double distance_between_points(Point *a, Point *b)
-{
-  return sqrt(SQUARE(b->x - a->x) + SQUARE(b->y - a->y));
-}
-
-static void print_point(Point *p)
-{
-  g_print("Point: (%f, %f)\n", p->x, p->y);
-}
-
 static Point *point_to_unit(Point *p)
 {
   return create_point(floor(p->x / grid_size), floor(p->y / grid_size));
@@ -65,8 +55,8 @@ static PointList *bresenham_algorithm(Point *a, Point *b)
 {
   int x0 = a->x, x1 = b->x;
   int y0 = a->y, y1 = b->y;
-  int dx =  abs (b->x - a->x), sx = a->x < b->x ? 1 : -1;
-  int dy = -abs (b->y - a->y), sy = a->y < b->y ? 1 : -1; 
+  int dx =  fabs (b->x - a->x), sx = a->x < b->x ? 1 : -1;
+  int dy = -fabs (b->y - a->y), sy = a->y < b->y ? 1 : -1; 
   int err = dx + dy, e2;
  
   PointList *head = (PointList *)malloc(sizeof(PointList));
@@ -99,7 +89,7 @@ static PointList *bresenham_algorithm(Point *a, Point *b)
 static Point *brush_p = NULL;
 static Point *eraser_p = NULL;
 static cairo_surface_t *surface = NULL;
-static cairo_surface_t *line_surface = NULL;
+static cairo_surface_t *temp = NULL;
 static GtkWidget *canvas = NULL;
 static gboolean straigt_lines = FALSE;
 
@@ -127,27 +117,18 @@ static void resize_cb (GtkWidget *widget,
            int        height,
            gpointer   user_data)
 {
-  grid_size = get_brush_size();
-  canvas_width = width;
-  canvas_height = height;
+	grid_size = get_brush_size();
+	canvas_width = width;
+	canvas_height = height;
 
-  if (surface)
-    {
-      cairo_surface_destroy (surface);
-      surface = NULL;
-    }
-
-  if (gtk_native_get_surface (gtk_widget_get_native (widget)))
-    {
-      
-      surface = gdk_surface_create_similar_surface (gtk_native_get_surface (gtk_widget_get_native (widget)),
-                                                    CAIRO_CONTENT_COLOR,
-                                                    canvas_width,
-                                                    canvas_height);
-
-      /* Initialize the surface to white */
-      clear_surface ();
-    }
+	if (surface)
+	{
+	    cairo_surface_destroy (surface);
+	    surface = NULL;
+	}
+	
+	surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, canvas_width, canvas_height);
+	clear_surface ();
 }
 
 /* Redraw the screen from the surface. Note that the draw
@@ -205,8 +186,23 @@ static void erase_pixel(GtkWidget *widget, Point *point)
   gtk_widget_queue_draw (widget);
 }
 
+static void create_temp_surface (void) {
+	temp = cairo_surface_create_similar_image (surface, CAIRO_FORMAT_ARGB32, canvas_width, canvas_height);
+
+	cairo_t *cr;
+
+	cr = cairo_create (temp);
+
+	cairo_set_source_surface (cr, surface, 0, 0);
+	cairo_paint (cr);
+	cairo_destroy (cr);
+}
+
 static void draw_straight_line(GtkWidget *widget, Point *point)
 {
+  if (temp == NULL)
+	  create_temp_surface ();
+
   Point *a = point_to_unit(brush_p);
   Point *b = point_to_unit(point);
 
@@ -214,13 +210,12 @@ static void draw_straight_line(GtkWidget *widget, Point *point)
 
   cairo_t *cr;
 
-  cr = cairo_create (line_surface);
+  cr = cairo_create (surface);
   
-  GdkRGBA *color = get_brush_color();
+  cairo_set_source_surface (cr, temp, 0, 0);
+  cairo_paint (cr);
 
-  cairo_set_source_rgba (cr, 0, 0, 0, 1);
-  cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
-  cairo_paint(cr);
+  GdkRGBA *color = get_brush_color();
 
   cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
   cairo_set_source_rgb (cr, color->red, color->green, color->blue);
@@ -244,8 +239,11 @@ static void draw_straight_line(GtkWidget *widget, Point *point)
   }
 
   cairo_destroy(cr);
+
   free(a);
   free(b);
+
+  gtk_widget_queue_draw (widget);
 }
 
 static void drag_begin (GtkGestureDrag *gesture,
@@ -281,20 +279,16 @@ static void drag_end (GtkGestureDrag *gesture,
           double          y,
           GtkWidget      *area)
 {
-  Point *p = add_point(brush_p, x, y);
+	if (temp) {
+		cairo_surface_destroy (temp);
+		temp = NULL;
+	}
 
-  if(straigt_lines) 
-  {
-    cairo_t *cr = cairo_create (surface);
-    cairo_set_source_surface (cr, line_surface, 0, 0);
-    cairo_paint (cr);
-    cairo_destroy(cr);
-    gtk_widget_queue_draw (area);
-  }
+	Point *p = add_point(brush_p, x, y);
 
-  draw_brush (area, p);
+	draw_brush (area, p);
 
-  free(p);
+	free(p);
 }
 
 static void erase_begin (GtkGestureDrag *gesture,
@@ -348,16 +342,9 @@ static gboolean key_pressed (
   GdkModifierType state,
   gpointer user_data
 ) {
-  if(line_surface != NULL) {
-    cairo_surface_destroy(line_surface);
-    line_surface = NULL;  
-  }
+	straigt_lines = keyval == GDK_KEY_Shift_L;
 
-  line_surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, canvas_width, canvas_height);
-
-  straigt_lines = keyval == GDK_KEY_Shift_L;
-
-  return TRUE;
+	return TRUE;
 }
 
 static void key_released (
@@ -367,11 +354,6 @@ static void key_released (
   GdkModifierType state,
   gpointer user_data
 ) {
-  if(line_surface != NULL) {
-    cairo_surface_destroy(line_surface);
-    line_surface = NULL;  
-  }
-
   straigt_lines = FALSE;
 }
 
@@ -397,7 +379,7 @@ static void set_eraser(GtkWidget *drawing_area) {
 
 static unsigned int total_length = 0;
 
-static cairo_status_t *write_callback (
+static cairo_status_t write_callback (
 		void *closure,
 		const unsigned char *data,
 	       	unsigned int length) {
@@ -452,7 +434,7 @@ void save_canvas (GFile *file, gpointer user_data) {
 
 	g_file_replace_contents_async (
 		file,
-		data,	
+		(char *) data,	
 		total_length,
 		NULL,
 		FALSE,
