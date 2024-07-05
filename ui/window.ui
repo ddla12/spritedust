@@ -1,6 +1,6 @@
 <interface>
   <object id="window" class="GtkWindow">
-    <property name="title">Ziggy editor</property>
+    <property name="title">Spritedust</property>
     <child>
         <object class="GtkBox">
             <property name="orientation">vertical</property>

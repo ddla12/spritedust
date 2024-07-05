@@ -1,5 +1,5 @@
-# ziggy sprite 
-#### Video Demo:  <URL HERE>
+# spritedust 
+#### Video Demo: https://youtu.be/SlHJSCyFhvI
 #### Description:
 
 A small pixel art editor made with GTK (C). It allows to do simple drawing in a custom canvas and then save it. It's super simple, it doesn't have the standard features of similar programs such as undo and redo. This is a WIP, though sufficiently complete to draw a basic sprite and save it.
@@ -46,9 +46,9 @@ The action bar contains 3 buttons:
 
 This is the final project for CS50, but I don't plan to freeze its development. As I said before this is a WIP, it is not yet tooo comfortable or practical for medium use cases (E.g tiles or backgrounds).
 
-- [] open a file for editing
-- [] undo and redo
-- [] bucket tool
+- [ ] open a file for editing
+- [ ] undo and redo
+- [ ] bucket tool
 
 These are the main features for this application to be in its first stable version (in addition to fix some bugs it has).
 
