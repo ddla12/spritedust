@@ -13,17 +13,12 @@
             <child>
                 <object id="action_bar" class="GtkActionBar">
                     <child type="start">
-                        <object id="color_button" class="GtkColorDialogButton" />
+				<object id="color_button" class="GtkColorDialogButton" />
                     </child>
                     <child>
-                        <object id="pixel_button" class="GtkButton">
-				<property name="icon-name">zoom-fit-best</property>
-		    	</object>
-                    </child>
-                    <child>
-			    <object id="save_button" class="GtkButton">
-				<property name="icon-name">document-save-as</property>
-			    </object>
+				<object id="save_button" class="GtkButton">
+					<property name="icon-name">document-save-as</property>
+				</object>
                     </child>
                 </object>
             </child>

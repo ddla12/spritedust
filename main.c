@@ -1,17 +1,14 @@
 #include <gtk/gtk.h>
-#include "canvas.h"
-#include "brush.h"
-#include "action.h"
-#include "src/types.h"
+#include "spritedust.h"
 
 static void activate_objects(GtkBuilder *builder, GtkWidget *window, gpointer user_data) {
     // Canvas
     GObject *drawing_area = gtk_builder_get_object(builder, "drawing_area");
 
-    activate_canvas(window, GTK_WIDGET (drawing_area), user_data);
+    activate_canvas(window, GTK_WIDGET (drawing_area));
 
     // Action
-    activate_action(builder, window, user_data);
+    activate_action(window, builder);
 
     // Brush
     GObject *color_button = gtk_builder_get_object(builder, "color_button");

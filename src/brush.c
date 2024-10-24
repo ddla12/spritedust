@@ -1,26 +1,28 @@
-#include "brush.h"
-#include "types.h"
+#include "spritedust.h"
 
-static GtkWidget *color_picker = NULL;
-static int brush_size = DEFAULT_PIXEL_SIZE;
+typedef struct Brush {
+	GdkRGBA *color;
+	PixelSize size;
+} Brush;
+
+static Brush brush = { NULL, NORMAL };
+static GtkColorDialog *color_picker = NULL;
 
 GdkRGBA *get_brush_color(void)
 {
-    GdkRGBA *color;
-    
-    color = gtk_color_dialog_button_get_rgba(GTK_COLOR_DIALOG_BUTTON (color_picker));
+    brush.color = gtk_color_dialog_button_get_rgba(GTK_COLOR_DIALOG_BUTTON (color_picker));
 
-    return color;
+    return brush.color;
 }
 
-int get_brush_size() 
+int get_brush_size(void) 
 {
-    return brush_size;
+    return brush.size;
 }
 
-int set_brush_size(int size)
+PixelSize set_brush_size(PixelSize size)
 {
-    return brush_size = size;
+    return brush.size = size;
 }
 
 void activate_brush(GtkWidget *window, GtkWidget *color)
@@ -29,5 +31,5 @@ void activate_brush(GtkWidget *window, GtkWidget *color)
     
     gtk_color_dialog_button_set_dialog(GTK_COLOR_DIALOG_BUTTON (color), dialog);
 
-    color_picker = color;
+    color_picker  = color;
 }
